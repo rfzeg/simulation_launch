@@ -5,6 +5,7 @@ import sys
 import rclpy
 from gazebo_msgs.srv import SpawnEntity
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = rclpy.create_node('minimal_client')
@@ -13,7 +14,7 @@ def main(args=None):
     content = sys.argv[1]
 
     req = SpawnEntity.Request()
-    req.name = "box_bot"
+    req.name = "robot"
     req.xml = content
     req.robot_namespace = ""
     req.reference_frame = "world"
