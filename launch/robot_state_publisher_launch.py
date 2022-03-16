@@ -1,18 +1,20 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
-import sys
-import rclpy
-from gazebo_msgs.srv import SpawnEntity
+
 from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
+from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 import xacro
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = rclpy.create_node('minimal_client')
-    cli = node.create_client(SpawnEntity, '/spawn_entity')
+def generate_launch_description():
 
     # Robot model: configure as needed
     robot_model_file = 'rrbot.xacro'
@@ -41,30 +43,12 @@ def main(args=None):
     robot_description_config = xacro.process_file(xacro_file)
     robot_desc = robot_description_config.toxml()
 
-    #content = sys.argv[1]
-    content = robot_desc
-
-    req = SpawnEntity.Request()
-    req.name = "robot"
-    req.xml = content
-    req.robot_namespace = ""
-    req.reference_frame = "world"
-
-    while not cli.wait_for_service(timeout_sec=1.0):
-        node.get_logger().info('service not available, waiting again...')
-
-    future = cli.call_async(req)
-    rclpy.spin_until_future_complete(node, future)
-
-    if future.result() is not None:
-        node.get_logger().info(
-            'Result ' + str(future.result().success) + " " + future.result().status_message)
-    else:
-        node.get_logger().info('Service call failed %r' % (future.exception(),))
-
-    node.destroy_node()
-    rclpy.shutdown()
-
-
-if __name__ == '__main__':
-    main()
+    return LaunchDescription([
+        Node(
+            package="robot_state_publisher",
+            executable="robot_state_publisher",
+            name="robot_state_publisher",
+            parameters=[
+                {"robot_description": robot_desc}],
+            output="screen"),
+    ])
